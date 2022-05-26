@@ -1,0 +1,159 @@
+#include <GyverMotor.h>
+#include <Servo.h>
+
+int dig1 = 9;
+int dig2 = 10;
+int led1 = 11;
+int led2 = 8;
+int led3 = 7;
+int pmw1 = 6;
+int pmw2 = 5; 
+int Laz = 4; 
+int sG = 13;
+int sV = 12;
+char chek;
+boolean key1 = 1, key2 = 1;
+int a;
+int md = 0, spdMd = 3;
+int angV = 90, angG = 90;
+
+int spd = 255;
+
+GMotor motor1(DRIVER2WIRE, dig1, pmw1, HIGH );
+GMotor motor2(DRIVER2WIRE, dig2, pmw2, HIGH );
+
+Servo serG;
+Servo serV;
+
+void CONTROL(){
+    a = chek - '0';
+
+    if (chek == 'o') key1 = 1;
+    
+    if ((a == 9) and (key1==1)){
+      if (md == 3) md = 1;
+      else md ++;
+      key1 = 0;
+    }
+
+    if (chek == 'o') key2 = 1;
+    
+    if ((a == 8) and (key2==1)){
+      if (spdMd == 3) spdMd = 1;
+      else spdMd++;
+      switch (spdMd){
+        case 1:
+        spd = 150;
+        break;
+        case 2:
+        spd = 200;
+        break;
+        case 3:
+        spd = 255;
+        break;
+      }
+      key2 = 0;
+    }
+}
+
+void setup() {
+  pinMode(dig1, OUTPUT);
+  pinMode(dig2, OUTPUT);
+  pinMode(pmw1, OUTPUT);
+  pinMode(pmw2, OUTPUT);
+  pinMode(Laz, OUTPUT);
+  pinMode(sG, OUTPUT);
+  pinMode(sV, OUTPUT);
+
+  serV.attach(sV);
+  serG.attach(sG);
+  Serial.begin(9600);
+  while(!Serial){
+  }
+
+}
+
+void loop() {
+if(Serial.available() > 0){
+      chek = Serial.read();
+      delay(2);
+      CONTROL();
+    }
+
+    motor1.setSpeed(spd);
+    motor2.setSpeed(spd);
+
+    
+    switch (md){
+      case 1:
+      digitalWrite(led1, 1);
+      digitalWrite(led2, 0);
+      digitalWrite(led3, 0);
+        switch (a){
+        case 0:
+        motor1.setMode(STOP);
+        motor2.setMode(STOP);
+        break;
+        case 1:
+        //Serial.write("up\n");
+        motor1.setMode(FORWARD);
+        motor2.setMode(FORWARD);
+        break;
+        case 2:
+        //Serial.write("write\n");
+        motor1.setMode(FORWARD);
+        motor2.setMode(BACKWARD);
+        break;
+        case 3:
+        //Serial.write("down\n");
+        motor1.setMode(BACKWARD);
+        motor2.setMode(BACKWARD);
+        break;
+        case 4:
+        //Serial.write("left\n");
+        motor1.setMode(BACKWARD);
+        motor2.setMode(FORWARD);
+        break;
+      }
+      break;
+      case 2:
+      digitalWrite(led1, 0);
+      digitalWrite(led2, 1);
+      digitalWrite(led3, 0);
+      switch (a){
+        case 1:
+        //Serial.write("up\n");
+        serV.write(angV + 1);
+        if(angV < 180) angV += 1;
+        break;
+        case 2:
+        //Serial.write("write\n");
+        serG.write(angG + 1);
+        if(angG < 180) angG += 1;
+        break;
+        case 3:
+        //Serial.write("down\n");
+        serV.write(angV - 1);
+        if(angV > 0) angV -= 1;
+        break;
+        case 4:
+        //Serial.write("left\n");
+        serG.write(angG - 1);
+        if(angG > 0) angG -= 1;
+        break;
+        }
+        break;
+      case 3:
+      digitalWrite(led1, 0);
+      digitalWrite(led2, 0);
+      digitalWrite(led3, 1);
+        if(a == 7){
+          digitalWrite(Laz, 1);
+          delay(500);
+          digitalWrite(Laz, 0);
+          delay(1000);
+        }
+        else digitalWrite(Laz, 0);
+      break;
+    }
+}
